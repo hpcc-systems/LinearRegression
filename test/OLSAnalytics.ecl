@@ -59,7 +59,9 @@ B_2 := -5.01;
 
 N := 50;
 M := 3;
+
 mX := tm.RandomMatrix(N, M, 1.0, 2);
+
 X := pbbConverted.MatrixToNF(mX);
 gX := GROUP(mX, x, ALL);
 cX := ROLLUP(gX,  GROUP, makeComposite(LEFT, ROWS(LEFT)));

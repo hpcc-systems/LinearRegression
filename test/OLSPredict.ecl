@@ -36,7 +36,9 @@ A1 := 3.123;  // Slope
 B1 := -1.222; // Intercept
 N1 := 10000;
 M1 := 1;
+
 mX1 := tm.RandomMatrix(N1, M1, 1.0, 1);
+
 Layout_Cell makeY(Layout_Cell X) := TRANSFORM
   SELF.x := X.x;
   SELF.y := 1;
@@ -47,7 +49,9 @@ mY1 := PROJECT(mX1, makeY(LEFT));
 X1 := pbbConverted.MatrixToNF(mX1);
 Y1 := pbbConverted.MatrixToNF(mY1);
 lr1 := LROLS.OLS(X1, Y1);
+
 newmX1 := tm.RandomMatrix(50, M1, 1.0, 1);
+
 newX1 := pbbConverted.MatrixToNF(newmX1);
 predY1 := lr1.Predict(newX1);
 test_rslt formatRslt1(STRING32 tn, NumericField l, NumericField r) := TRANSFORM
@@ -81,7 +85,9 @@ A23 := 11.13;
 B2 := -3.333;
 N2 := 10000;
 M2 := 3;
+
 mX2 := tm.RandomMatrix(N2, M2, 1.0, 2);
+
 sX2 := SORT(mX2, wi_id, x);
 gX2 := GROUP(sX2, wi_id, x);
 cX2 := ROLLUP(gX2,  GROUP, makeComposite2(LEFT, ROWS(LEFT)));
@@ -95,7 +101,9 @@ mY2 := PROJECT(cX2, makeY2(LEFT));
 X2 := pbbConverted.MatrixToNF(mX2);
 Y2 := pbbConverted.MatrixToNF(my2);
 lr2 := LROLS.OLS(X2, Y2);
+
 newmX2 := tm.RandomMatrix(50, M2, 1.0, 2);
+
 newX2 := pbbConverted.MatrixToNF(newmX2);
 predY2 := lr2.Predict(newX2);
 
@@ -165,7 +173,9 @@ A53_2 := -1.765;
 B5_2  := 2.654;
 N5 := 10000;
 M5 := 3;
+
 mX5 := tm.RandomMatrix(N5, M5, 1.0, 1);
+
 sX5 := SORT(mX5, wi_id, x);
 gX5 := GROUP(sX5, wi_id, x);
 cX5 := ROLLUP(gX5,  GROUP, makeComposite5(LEFT, ROWS(LEFT)));
@@ -182,7 +192,9 @@ mY5 := NORMALIZE(cX5, 2, makeY5(LEFT, COUNTER));
 X5 := pbbConverted.MatrixToNF(mX5);
 Y5 := pbbConverted.MatrixToNF(my5);
 lr5 := LROLS.OLS(X5, Y5);
+
 newmX5 := tm.RandomMatrix(50, M5, 1.0, 1);
+
 newX5 := pbbConverted.MatrixToNF(newmX5);
 predY5 := lr5.Predict(newX5);
 
