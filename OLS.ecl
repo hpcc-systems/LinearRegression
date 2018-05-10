@@ -1,5 +1,5 @@
 /*##############################################################################
-## HPCC SYSTEMS software Copyright (C) 2017 HPCC Systems®.  All rights reserved.
+## HPCC SYSTEMS software Copyright (C) 2017 HPCC Systems.  All rights reserved.
 ############################################################################## */
 
 IMPORT ML_Core;
@@ -26,46 +26,46 @@ side := pbbTypes.side;
 diagonal := pbbTypes.diagonal;
 /**
   * Ordinary Least Squares (OLS) Linear Regression
-  *  aka Ordinary Linear Regression
+  *  aka Ordinary Linear Regression.
   *
-  * Regression learns a function that maps a set of input data (independents)
+  * <p>Regression learns a function that maps a set of input data (independents)
   * to one or more output variables (dependents).  The resulting learned function is
   * known as the model.  That model can then be used repetitively to predict
   * (i.e. estimate) the output value(s) based on new input data.
   *
-  * Two major use cases are supported:
-  * 1) Learn and return a model
-  * 2) Use an existing (e.g. persisted) model to predict new values for Y
+  * Two major use cases are supported:<ol>
+  * <li>Learn and return a model.</li>
+  * <li>Use an existing (e.g. persisted) model to predict new values for Y.</li></ol>
   *
-  * Of course, both can be done in a single run.  Alternatively, the
+  * <p>Of course, both can be done in a single run.  Alternatively, the
   * model can be persisted and used indefinitely for prediction of Y values,
   * as long as the record format has not changed, and the original training
   * data remains representative of the population.
   *
-  * OLS supports any number of independent variables (Multiple Regression) and
+  * <p>OLS supports any number of independent variables (Multiple Regression) and
   * multiple dependent variables (Multivariate Regression).  In this way, multiple
   * variables' values can be predicted from the same input (i.e. independent)
   * data.
   *
-  * Training data is presented as parameters to this module.  When using a
+  * <p>Training data is presented as parameters to this module.  When using a
   * previously persisted model (use case 2 above), these parameters should
   * be omitted.
   *
-  * This module provides a rich set of analytics to assess the usefulness of the
+  * <p>This module provides a rich set of analytics to assess the usefulness of the
   * resulting linear regression model, and to determine the best subset of
-  * independent variables to include in the model.  These include:
+  * independent variables to include in the model.  These include:<ul>
   *
-  * For the whole model:
-  * - Analysis of Variance (ANOVA)
-  * - R-squared
-  * - Adjusted R-squared
-  * - F-Test
-  * - Akaike Information Criterion (AIC)
-  * For each coefficient:
-  * - Standard Error (SE)
-  * - T-statistic
-  * - P-value
-  * - Confidence Interval
+  * <li>For the whole model:<ul>
+  *   <li>Analysis of Variance (ANOVA)</li>
+  *   <li>R-squared</li>
+  *   <li>Adjusted R-squared</li>
+  *   <li>F-Test</li>
+  *   <li>Akaike Information Criterion (AIC)</li></ul></li>
+  * <li>For each coefficient:<ul>
+  *   <li>Standard Error (SE)</li>
+  *   <li>T-statistic</li>
+  *   <li>P-value</li>
+  *   <li>Confidence Interval</li></ul></li></ul>
   *
   * @param X The independent variable training data in DATASET(NumericField) format.
   *          Each observation (e.g. record) is identified by
@@ -77,7 +77,8 @@ diagonal := pbbTypes.diagonal;
   *         format. Each observation (e.g. record) is identified by
   *         'id', and each feature is identified by field number. Omit this parameter when
   *         predicting from a persisted model.
-  *
+  * @return The instantiated model.
+  * @see ML_Core.Types.NumericField
   */
 EXPORT OLS(DATASET(NumericField) X=empty_data, DATASET(NumericField) Y=empty_data)
                      := MODULE(ML_Core.Interfaces.IRegression())
@@ -116,25 +117,28 @@ EXPORT OLS(DATASET(NumericField) X=empty_data, DATASET(NumericField) Y=empty_dat
     SELF.value     := b.v;
   END;
   /**
-    * GetModel
-    *
-    * Returns the learned model that maps X's to Y's.  In the case of
+    * Return the learned model that maps Independent X variables to
+    * Dependent variable(s) Y.
+    * <p>In the case of
     * OLS, the model represents a set of Betas which are the coefficients
     * of the linear model: Beta0 * 1 + Beta1 * Field1 + Beta2 * Field2 ...
     * The ID of each model record specifies to which Y variable the coefficient
     * applies.
-    * The Field Number ('number') indicates to which field of X the beta is to be
+    * <p>The Field Number ('number') indicates to which field of X the beta is to be
     * applied.  Field number 1 provides the intercept portion of the linear
     * model and is always multiplied by 1.
-    * Note that if multiple work-items are provided within X and Y, there
-    * will be multiple models returned.  The models can be separated by
+    * <p>Note that if multiple work-items are provided within X and Y, there
+    * will be multiple models returned in one dataset. The models can be separated by
     * their work item id (i.e. 'wi').  A single model can be extracted from
-    * a myriad model by using e.g., model(wi=myWI_id).  GetModel should not
+    * a myriad model by using e.g., model(wi=myWI_id).
+    * <p>GetModel should not
     * be called when predicting using a previously persisted model (i.e. when
-    * training data was not passed to the module.
+    * training data was not passed to the module).
     *
-    * @return  Model in DATASET(Layout_Model) format
-    * @see     ML_core/Types.Layout_Model
+    * <p>Example:
+    * <pre> myModel := OLS(X, Y).GetModel;</pre>
+    * @return  Model in DATASET(Layout_Model) format.
+    * @see ML_core/Types.Layout_Model
     */
   EXPORT DATASET(Layout_Model) GetModel  := PROJECT(mBetas, betasToModel(LEFT));
 
@@ -146,28 +150,28 @@ EXPORT OLS(DATASET(NumericField) X=empty_data, DATASET(NumericField) Y=empty_dat
     SELF.y     := m.id;
     SELF.v     := m.value;
   END;
+
   SHARED DATASET(Layout_Cell) mBetas(DATASET(Layout_Model) model=GetModel) :=
                                                 PROJECT(model, modelToBetas(LEFT));
   /**
-    * Return raw Beta values as numeric fields
-    *
-    * Extracts Beta values from the model.  Can be used during training and prediction
-    * phases.  For use during training phase, the 'model' parameter can be omitted.
-    * GetModel will be called to retrieve the model based on the training data.  For
+    * <p>Extract Beta values from the model.  Can be used during training and prediction
+    * phases.
+    * <p>For use during training phase, the 'model' parameter can be omitted.
+    * GetModel will be called to retrieve the model based on the training data. <p>For
     * use during prediction phase, a previously persisted model should be provided.
-    * The 'number' field of the returned NumericField records specifies to which Y
+    * <p>The 'number' field of the returned NumericField records specifies to which Y
     * the coefficient applies.
-    * The 'id' field of the returned record indicates the position of the Beta
+    * <p>The 'id' field of the returned record indicates the position of the Beta
     * value. ID = 1 provides the Beta for the constant term (i.e. the Y intercept) while
     * subsequent values reflect the Beta for each correspondingly numbered X feature.
     * Feature 1 corresponds to Beta with 'id' = 2 and so on.
-    * If 'model' contains multiple work-items, Separate sets of Betas will be returned
+    * <p>If 'model' contains multiple work-items, Separate sets of Betas will be returned
     * for each of the 'myriad' models (distinguished by 'wi').
     *
     * @param model Optional parameter provides a model that was previously retrieved
     *               using GetModel.  If omitted, GetModel will be used as the model.
     * @return DATASET(NumericField) containing the Beta values.
-    *
+    * @see ML_Core.Tyeps.NumericField
     */
   EXPORT DATASET(NumericField) Betas(DATASET(Layout_Model) model=GetModel) := FUNCTION
     nfBetas := PbbConverted.MatrixToNF(mBetas(model));
@@ -179,7 +183,7 @@ EXPORT OLS(DATASET(NumericField) X=empty_data, DATASET(NumericField) Y=empty_dat
     * variables (X).  Returns a predicted Y values for each observation
     * (i.e. record) of X.
     *
-    * This supports the 'myriad' style interface in that multiple independent
+    * <p>This attribute supports the 'myriad' style interface in that multiple independent
     * work items may be present in 'newX', and multiple independent models may
     * be provided in 'model'.  The resulting predicted values will also be
     * separable by work item (i.e. wi).
@@ -279,31 +283,29 @@ EXPORT OLS(DATASET(NumericField) X=empty_data, DATASET(NumericField) Y=empty_dat
     t_FieldReal   RSquared;
   END;
 
-  EXPORT R2Rec makeRSQ(CoCoRec coco) := TRANSFORM
+  SHARED R2Rec makeRSQ(CoCoRec coco) := TRANSFORM
     SELF.wi := coco.wi;
     SELF.number := coco.number;
     SELF.RSquared := coco.pearson * coco.pearson;
   END;
   /**
-    * RSquared
-    *
     * Calculate the R-Squared Metric used to assess the fit of the regression line to the
-    * training data.  Since the regression has chosen the best (i.e. least squared error) line
+    * training data. <p>Since the regression has chosen the best (i.e. least squared error) line
     * matching the data, this can be thought of as a measurement of the linearity of the
-    * training data.  R Squared generally varies between 0 and 1, with 1 indicating an exact
+    * training data.  <p>R Squared generally varies between 0 and 1, with 1 indicating an exact
     * linear fit, and 0 indicating that a linear fit will have no predictive power.  Negative
     * values are possible under certain conditions, and indicate that the mean(Y) will be more
-    * predictive than any linear fit.  Moderate values of R squared (e.g. .5) may indicate
+    * predictive than any linear fit.  <p>Moderate values of R squared (e.g. .5) may indicate
     * that the relationship of X -> Y is non-linear, or that the measurement error is high
     * relative to the linear correlation (e.g. many outliers).  In the former case, increasing
     * the dimensionality of X, such as by using polynomial variants of the features, may
     * yield a better fit.
     *
-    * R squared always increases when additional independent variables are added, so it should
+    * <p>R squared always increases when additional independent variables are added, so it should
     * not be used to determine the optimal set of X variables to include.  For that purpose,
     * use Adjusted R Squared (below) which penalizes larger numbers of variables.
     *
-    * Note that the result of this call is only meaningful during training phase (use case 1
+    * <p>Note that the result of this call is only meaningful during training phase (use case 1
     * above) as it is an analysis based on the training data which is not provided during a
     * prediction-only phase.
     *
@@ -332,6 +334,23 @@ EXPORT OLS(DATASET(NumericField) X=empty_data, DATASET(NumericField) Y=empty_dat
   // Include the number of dependent variables for each work-item (i.e. K)
   SHARED Y_stats2 := JOIN(Y_stats1, fieldCounts, LEFT.wi=RIGHT.wi,
                             TRANSFORM(tmpRec, SELF.K := RIGHT.K, SELF := LEFT), LOOKUP);
+  /**
+    * Record layout for the information returned from calcAnova.
+    *
+    * @field wi The work-item number
+    * @field number The dependent field (i.e. regressor) number.
+    * @field Total_SS The total Sum-of-Squares variance.
+    * @field Model_SS The Sum-of-Squares variance explained by the model.
+    * @field Error_SS The Sum-of-Squares variance not explained by the model (
+    *                 aka Residual Sum-of-Squares).
+    * @field Total_DF Degrees of freedom in the data.
+    * @field Model_DF Degrees of freedom of the model.
+    * @field Error_DF Degrees of freedom of the error.
+    * @field Total_MS Mean square variance of the data.
+    * @field Model_MS Mean square variance of the model.
+    * @field Error_MS Mean square residual error.
+    * @field Model_F The F-test statistic.
+    */
   EXPORT AnovaRec := RECORD
     t_work_item           wi;
     t_fieldNumber         number;   // Y field number
@@ -344,10 +363,10 @@ EXPORT OLS(DATASET(NumericField) X=empty_data, DATASET(NumericField) Y=empty_dat
     Types.t_fieldreal     Total_MS; // Mean Square
     Types.t_fieldreal     Model_MS; // Mean Square
     Types.t_fieldreal     Error_MS; // Mean Square
-    Types.t_fieldreal     Model_F;  // F-value
+    Types.t_fieldreal     Model_F;  // F-test Statistic
   END;
 
-  EXPORT AnovaRec calcAnova(tmpRec le) :=TRANSFORM
+  SHARED AnovaRec calcAnova(tmpRec le) :=TRANSFORM
     k   := le.K;
     // SST = sample-variance * Total_DF.  Var gives population-variance
     // To convert population to sample, we multiply var by n/(n-1).  Since Total_DF
@@ -370,33 +389,34 @@ EXPORT OLS(DATASET(NumericField) X=empty_data, DATASET(NumericField) Y=empty_dat
   END;
 
   /**
-    * ANOVA (Analysis of Variance) report
+    * ANOVA (Analysis of Variance) report.
     *
-    * Analyzes the sources of variance.
-    * Basic ANOVA equality:  Model + Error = Total
-    * Determines how much of the variance of Y is explained by the
+    * <p>Analyze the sources of variance.
+    * <p>Basic ANOVA equality:  Model + Error = Total
+    * <p>Determines how much of the variance of Y is explained by the
     * regression model, versus how much is due to the error term
     * (i.e. unexplained variance).
-    * This attribute is only meaningful during the training phase.
+    * <p>This attribute is only meaningful during the training phase.
     *
-    * Provides one record per  work-item.
-    * Each record provides the following statistics:
-    * - Total_SS -- Total Sum of Squares (SS) variance of the dependent data
-    * - Model_SS -- The SS variance represented within the model
-    * - Error_SS -- The SS variance not reflected by the model
-    *                (i.e. Total_SS - Error_SS)
-    * - Total_DF -- The total degrees of freedom within the dependent data
-    * - Model_DF -- Degrees of freedom of the model
-    * - Error_DF -- Degrees of freedom of the error component
-    * - Total_MS -- The Mean Square (MS) variance of the dependent data
-    * - Model_MS -- The Mean Square (MS) variance represented within the
-    *                model
-    * - Error_MS -- The MS variance not reflected by the model
-    * - Model_F  -- The F-Test statistic: Model_MS / Error_MS
+    * <p>Provides one record per  work-item.
+    * Each record provides the following statistics:<ul>
+    *   <li>Total_SS -- Total Sum of Squares (SS) variance of the dependent data.</li>
+    *   <li>Model_SS -- The SS variance represented within the model.</li>
+    *   <li>Error_SS -- The SS variance not reflected by the model
+    *                (i.e. Total_SS - Error_SS).</li>
+    *   <li>Total_DF -- The total degrees of freedom within the dependent data.</li>
+    *   <li>Model_DF -- Degrees of freedom of the model.</li>
+    *   <li>Error_DF -- Degrees of freedom of the error component.</li>
+    *   <li>Total_MS -- The Mean Square (MS) variance of the dependent data.</li>
+    *   <li>Model_MS -- The Mean Square (MS) variance represented within the
+    *                model.</li>
+    *   <li>Error_MS -- The MS variance not reflected by the model.</li>
+    *   <li>Model_F  -- The F-Test statistic: Model_MS / Error_MS.</li></ul>
     *
     * @return  DATASET(AnovaRec), one per work-item per dependent (Y) variable
     *          The number field indicates the dependent variable to which the
     *          analysis applies.
+    * @see AnovaRec
     *
     */
   EXPORT Anova := FUNCTION
@@ -488,11 +508,11 @@ EXPORT OLS(DATASET(NumericField) X=empty_data, DATASET(NumericField) Y=empty_dat
   END;
 
   /**
-    * Standard Error of the Regression Coefficients
+    * Compute the Standard Error of the Regression Coefficients.
     *
-    * Describes the variability of the regression error for each coefficient.
+    * <p>Describes the variability of the regression error for each coefficient.
     *
-    * Only meaningful during the training phase.
+    * <p>Only meaningful during the training phase.
     *
     * @return DATASET(NumericField), one record per Beta coefficient per dependent
     *         variable per work-item.
@@ -501,10 +521,10 @@ EXPORT OLS(DATASET(NumericField) X=empty_data, DATASET(NumericField) Y=empty_dat
     *         The 'number' field indicates the dependent variable to which the
     *         coefficient applies.
     */
-  // Standard error of the regression coefficients is just the square root of the
-  // sampling variance of each coefficient (i.e. the diagonal terms of the Coefficient
-  // Covariance Matrix).
   EXPORT DATASET(NumericField) SE := FUNCTION
+    // Standard error of the regression coefficients is just the square root of the
+    // sampling variance of each coefficient (i.e. the diagonal terms of the Coefficient
+    // Covariance Matrix).
     sErr := PROJECT(Coef_var, calc_sErr(LEFT));
     RETURN sErr;
   END;
@@ -516,14 +536,14 @@ EXPORT OLS(DATASET(NumericField) X=empty_data, DATASET(NumericField) Y=empty_dat
     SELF := b;
   END;
   /**
-    * T-Statistic
+    * Compute the T-Statistic.
     *
-    * The T-statistic identifies the significance of the value of each regression
+    * <p>The T-statistic identifies the significance of the value of each regression
     * coefficient.  Its calculation is simply the value of the coefficient divided
     * by the Standard Error of the coefficient.  A larger absolute value of the
     * T-statistic indicates that the coefficient is more significant.
     *
-    * Only meaningful during the training phase.
+    * <p>Only meaningful during the training phase.
     *
     * @return DATSET(NumericField), one record per Beta coefficient per dependent
     *         variable per work-item.
@@ -543,11 +563,9 @@ EXPORT OLS(DATASET(NumericField) X=empty_data, DATASET(NumericField) Y=empty_dat
   END;
 
   /**
-    * Adjusted R2
-    *
-    * Calculate Adjusted R Squared which is a scaled version of R Squared
+    * Calculate Adjusted R Squared, a normalized version of R Squared
     * that does not arbitrarily increase with the number of features.
-    * Adjusted R2, rather than R2 should always be used when trying to determine the
+    * <p>Adjusted R2, rather than R2 should always be used when trying to determine the
     * best set of features to include in a model.  When adding features, R2 will
     * always increase, whether or not it improves the predictive power of the model.
     * Adjusted R2, however, will only increase with the predictive power of the model.
@@ -564,6 +582,13 @@ EXPORT OLS(DATASET(NumericField) X=empty_data, DATASET(NumericField) Y=empty_dat
   SHARED PI := 3.141592653589793;
 
   // Record format for AIC results
+  /**
+    * Record layout for return from AIC function.
+    *
+    * @field wi The work-item number.
+    * @field number The field-number of the dependent variable (i.e. regressor).
+    * @field AIC The Akaike Information Criteria value.
+    */
   EXPORT AICRec := RECORD
     t_work_item wi;
     t_FieldNumber number;
@@ -588,10 +613,10 @@ EXPORT OLS(DATASET(NumericField) X=empty_data, DATASET(NumericField) Y=empty_dat
   END;
 
   /**
-    * Akaike Information Criterion (AIC)
+    * Calculate the Akaike Information Criterion (AIC).
     *
-    * Information theory based criterion for assessing Goodness of Fit (GOF).
-    * Lower values mean better fit.
+    * <p>AIC is an Information Theory based criterion for assessing Goodness of Fit (GoF).
+    * <p>Lower values mean better fit.
     *
     * @return DATASET(AICRec), one record per dependent variable per work-item. The
     *          number field indicates the dependent variable and corresponds to the number
@@ -605,7 +630,9 @@ EXPORT OLS(DATASET(NumericField) X=empty_data, DATASET(NumericField) Y=empty_dat
   // We temporarily include code here for needed statistical distributions.
   // This should be removed once we have a productized Distribution module.
 
-  // Density vector
+  /** Density vector
+    * @internal
+    */
   EXPORT RangeVec := RECORD
     t_Count RangeNumber;
     t_FieldReal RangeLow; // Values > RangeLow
@@ -613,7 +640,10 @@ EXPORT OLS(DATASET(NumericField) X=empty_data, DATASET(NumericField) Y=empty_dat
     t_FieldReal P;
   END;
   SHARED E := 2.718281828459;
-
+  /**
+    * Base class for probability distribution attributes.
+    * @internal
+    */
   EXPORT DistributionBase(t_Count Nranges = 10000) := MODULE,VIRTUAL
     EXPORT Low := 0;  // Override for each distribution
     EXPORT High := 100; // OVerride for each distribution
@@ -663,9 +693,11 @@ EXPORT OLS(DATASET(NumericField) X=empty_data, DATASET(NumericField) Y=empty_dat
     EXPORT Discrete := FALSE;
   END;
 
-  // Student T distribution
-  // This distribution is entirely symmetric about the mean - so we will model the >= 0 portion
-  // Warning - v=1 tops out around the 99.5th percentile, 2+ is fine
+  /** Student T distribution
+    * This distribution is entirely symmetric about the mean - so we will model the >= 0 portion
+    * Warning - v=1 tops out around the 99.5th percentile, 2+ is fine.
+    * @internal
+    */
 
   EXPORT TDistribution(t_Discrete v_in,t_Count NRanges = 10000) := MODULE(DistributionBase(NRanges))
     SHARED v := v_in;
@@ -705,7 +737,10 @@ EXPORT OLS(DATASET(NumericField) X=empty_data, DATASET(NumericField) Y=empty_dat
                 InterC(cv(t > RangeLow,t <= RangeHigh)[1], t) );
     END;
   END;
-  // F Distribution
+  /**
+    * F Distribution
+    * @internal
+    */
   EXPORT FDistribution(t_Discrete d1_in, t_Discrete d2_in, t_Count NRanges = 10000) := MODULE(DistributionBase(NRanges))
     SHARED REAL8 d1 := d1_in;
     SHARED REAL8 d2 := d2_in;
@@ -727,7 +762,9 @@ EXPORT OLS(DATASET(NumericField) X=empty_data, DATASET(NumericField) Y=empty_dat
          //(SQRT(POWER(d1*RH, d1) * POWER(d2, d2)/(POWER(d1*RH + d2, d1+d2)))) /
          //(RH * Math.Beta(d1/2, d2/2));
   END;
-  // Normal Distribution
+  /** Normal Distribution.
+    * @internal
+    */
   EXPORT NormalDistribution(t_Count NRanges) := MODULE(DistributionBase(NRanges))
    EXPORT t_FieldReal Density(t_FieldReal t) := POWER(E, -.5 * t * t) / SQRT(2*PI);
   END;
@@ -747,16 +784,14 @@ EXPORT OLS(DATASET(NumericField) X=empty_data, DATASET(NumericField) Y=empty_dat
     SELF       := t;
   END;
   /**
-    * P-Value
-    *
     * Calculate the P-value for each coefficient, which is the probability that
-    * the coefficient is insignificant (i.e. actually zero).  A low P-value (e.g. .05)
-    * provides evidence that the coefficient is significant in the model.  A
+    * the coefficient is insignificant (i.e. actually zero).  <p>A low P-value (e.g. .05)
+    * provides evidence that the coefficient is significant in the model.  <p>A
     * high P-value indicates that the coefficient value should, in fact, be zero.
-    * P-value is related to the T-Statistic, and can be thought of as a normalized
+    * <p>P-value is related to the T-Statistic, and can be thought of as a normalized
     * version of the T-Statistic.
     *
-    * Only meaningful during the training phase.
+    * <p>Only meaningful during the training phase.
     *
     * @return DATSET(NumericField), one record per Beta coefficient per dependent
     *         variable per work-item.
@@ -768,6 +803,15 @@ EXPORT OLS(DATASET(NumericField) X=empty_data, DATASET(NumericField) Y=empty_dat
   EXPORT pVal := JOIN(tStat, Anova, LEFT.wi = RIGHT.wi, calc_P(LEFT, RIGHT));
 
   // Confidence Interval
+  /**
+    * Record layout for the return from ConfInt.
+    *
+    * @field wi The work-item number.
+    * @field id The coefficient number (1 is the constant term).
+    * @field number The dependent field number (i.e. regressor).
+    * @field LowerInt The lower bound of the interval.
+    * @field UpperInt The upper bound of the interval.
+    */
   EXPORT ConfintRec := RECORD
     t_work_item    wi;
     t_RecordID     id;
@@ -796,16 +840,16 @@ EXPORT OLS(DATASET(NumericField) X=empty_data, DATASET(NumericField) Y=empty_dat
   END;
 
   /**
-    * Confidence Interval
+    * Compute the Confidence Interval for each coefficient.
     *
-    * The Confidence Interval determines the upper and lower bounds of each estimated coefficient
+    * <p>The Confidence Interval determines the upper and lower bounds of each estimated coefficient
     * given a confidence level (level) that is required.
-    * For example, one could say that there is a 95% probability (level) that the coefficient of the
+    * <p>For example, one could say that there is a 95% probability (level) that the coefficient of the
     * first independent variable is between 2.05 and 3.62.  This allows error margins to be
     * determined with the desired confidence level.  If the confidence interval spans zero,
     * it implies that the coefficient may not be significant at the specified confidence level.
     *
-    * @param level The level of confidence required, expressed as a percentage from 0.0 to 100.0
+    * @param level The level of confidence required, expressed as a percentage from 0.0 to 100.0.
     * @return DATASET(ConfintRec) with one record per coefficient per dependent variable
     *         per work-item.
     *         The 'id' field is the coefficient number, with 1 being the
@@ -831,6 +875,13 @@ EXPORT OLS(DATASET(NumericField) X=empty_data, DATASET(NumericField) Y=empty_dat
   // F-Test
 
   // Returned record for F-Test
+  /**
+    * The record layout for the return from Ftest
+    * @field wi The work-item number.
+    * @field number The dependent field (i.e. regressor) number.
+    * @field Model_F The F-value.
+    * @field pValue The p-value for the full distribution.
+    */
   EXPORT FTestRec := RECORD
     t_work_item wi;
     t_FieldNumber number;
@@ -856,18 +907,16 @@ EXPORT OLS(DATASET(NumericField) X=empty_data, DATASET(NumericField) Y=empty_dat
   END;
 
   /**
-    * F-Test
-    *
-    * Calculate the P-value for the full regression, which is the probability that
+    * Perform an F-test. <p>Calculate the P-value for the full regression, which is the probability that
     * all of the coefficients are insignificant (i.e. actually zero).
-    * A low P-value (e.g. .05)
+    * <p>A low P-value (e.g. .05)
     * provides evidence that at least one coefficient is significant.  A
     * high P-value indicates that all the coefficient values should in fact be zero,
     * implying that the regression has no statistically significant predictive power.
-    * P-value is related to the ANOVA F-Statistic, and can be thought of as a standardized
+    * <p>P-value is related to the ANOVA F-Statistic, and can be thought of as a standardized
     * version of the ANOVA F-Statistic.
     *
-    * The F-Test and T-Test are similar, except that the T-test is used to test the
+    * <p>The F-Test and T-Test are similar, except that the T-test is used to test the
     * significance of each coefficient, while the F-Test is used to test the significance
     * of the entire regression.  For simple linear regression (i.e. only one independent
     * variable, the T-Test and F-Test are equivalent.
