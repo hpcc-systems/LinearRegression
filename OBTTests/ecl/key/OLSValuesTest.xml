@@ -1,0 +1,38 @@
+<Dataset name='Test1'>
+ <Row><Test1>Pass</Test1></Row>
+</Dataset>
+<Dataset name='Test2A'>
+ <Row><Test2A>Pass</Test2A></Row>
+</Dataset>
+<Dataset name='Test2B'>
+ <Row><Test2B>Pass</Test2B></Row>
+</Dataset>
+<Dataset name='Test3'>
+ <Row><Test3>Pass</Test3></Row>
+</Dataset>
+<Dataset name='InvalidCI'>
+</Dataset>
+<Dataset name='Test4A'>
+ <Row><Test4A>Pass</Test4A></Row>
+</Dataset>
+<Dataset name='Test4B'>
+ <Row><Test4B>Pass</Test4B></Row>
+</Dataset>
+<Dataset name='Test4C'>
+ <Row><Test4C>Pass</Test4C></Row>
+</Dataset>
+<Dataset name='Test5'>
+ <Row><Test5>Pass</Test5></Row>
+</Dataset>
+<Dataset name='Test6A'>
+ <Row><Test6A>Pass</Test6A></Row>
+</Dataset>
+<Dataset name='Test6B'>
+ <Row><Test6B>Pass</Test6B></Row>
+</Dataset>
+<Dataset name='Test6C'>
+ <Row><Test6C>Pass</Test6C></Row>
+</Dataset>
+<Dataset name='Test6D'>
+ <Row><Test6D>Pass</Test6D></Row>
+</Dataset>
